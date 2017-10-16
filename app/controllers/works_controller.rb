@@ -102,7 +102,7 @@ private
 
   def prevent_access
     if @login_user == nil
-      flash.now[:error] = "Only logged in users can access this page."
+      flash[:result_text] = "Only logged in users can access that page."
       redirect_to root_path
     end
   end
