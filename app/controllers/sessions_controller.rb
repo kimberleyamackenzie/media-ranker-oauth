@@ -17,7 +17,7 @@ class SessionsController < ApplicationController
           session[:user_id] = @user.id
           flash[:result_text] = "Welcome to MediaRanker, #{@user.name}"
         else
-          flash[:error] = "Unable to save user!"
+          flash[:result_text] = "Unable to save user!"
         end
     end
     redirect_to root_path
