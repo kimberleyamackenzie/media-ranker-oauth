@@ -2,6 +2,7 @@ class WorksController < ApplicationController
   # We should always be able to tell what category
   # of work we're dealing with
   before_action :category_from_work, except: [:root, :index, :new, :create]
+  before_action :prevent_access, except: [:root]
 
   def root
     @albums = Work.best_albums
@@ -97,5 +98,12 @@ private
     @work = Work.find_by(id: params[:id])
     render_404 unless @work
     @media_category = @work.category.downcase.pluralize
+  end
+
+  def prevent_access
+    if @login_user == nil
+      flash.now[:error] = "Only logged in users can access this page."
+      redirect_to root_path
+    end
   end
 end
