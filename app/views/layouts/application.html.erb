@@ -26,7 +26,8 @@
         <% if @login_user %>
           <%= link_to "Log Out", logout_path, method: :post, class: "button" %>
         <% else %>
-          <%= link_to "Log In Using Github", "/auth/github", class: "button float-right" %>
+          <%= link_to "Log In Using Github", "/auth/github", class: "button" %>
+          <%= link_to "Log In Using Google", "/auth/google_oauth2", class: "button" %>
         <% end %>
       </div>
     </nav>

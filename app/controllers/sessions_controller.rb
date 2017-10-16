@@ -4,6 +4,7 @@ class SessionsController < ApplicationController
 
   def create
     @auth_hash = request.env['omniauth.auth']
+    ap @auth_hash
 
     @user = User.find_by(uid: @auth_hash['uid'], provider: @auth_hash['provider'])
 
@@ -11,7 +12,7 @@ class SessionsController < ApplicationController
       session[:user_id] = @user.id
         flash[:result_text] = "Welcome back #{@user.name}"
     else
-      @user = User.new(uid: @auth_hash['uid'], provider: @auth_hash['provider'], name: @auth_hash['info']['name'], username: @auth_hash['info']['nickname'], email: @auth_hash['info']['email'])
+      @user = User.new(uid: @auth_hash['uid'], provider: @auth_hash['provider'], name: @auth_hash['info']['name'], username: @auth_hash['info']['email'], email: @auth_hash['info']['email'])
         if @user.save
           session[:user_id] = @user.id
           flash[:result_text] = "Welcome to MediaRanker, #{@user.name}"
