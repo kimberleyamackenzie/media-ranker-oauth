@@ -20,6 +20,11 @@ class WorksController < ApplicationController
   end
 
   def create
+    if @login_user == nil
+      flash[:result_text] = "Only logged in users may create new works."
+      redirect_to root_path
+    end
+
     @work = Work.new(media_params)
     @media_category = @work.category
     if @work.save
@@ -42,24 +47,35 @@ class WorksController < ApplicationController
   end
 
   def update
-    @work.update_attributes(media_params)
-    if @work.save
+    if @login_user.id == @work.user_id
+      @work.update_attributes(media_params)
       flash[:status] = :success
       flash[:result_text] = "Successfully updated #{@media_category.singularize} #{@work.id}"
       redirect_to work_path(@work)
     else
       flash.now[:status] = :failure
-      flash.now[:result_text] = "Could not update #{@media_category.singularize}"
-      flash.now[:messages] = @work.errors.messages
-      render :edit, status: :not_found
+      if @login_user.id != @work.user_id
+        flash[:result_text] = "You can't change that. Only the owner #{User.find_by(id: @work.user_id)} can."
+        redirect_to work_path(@work)
+      else
+        flash.now[:result_text] = "Could not update #{@media_category.singularize}"
+        flash.now[:messages] = @work.errors.messages
+        render :edit, status: :not_found
+      end
     end
   end
 
   def destroy
-    @work.destroy
-    flash[:status] = :success
-    flash[:result_text] = "Successfully destroyed #{@media_category.singularize} #{@work.id}"
-    redirect_to root_path
+    if @login_user.id == @work.user_id
+      @work.destroy
+      flash[:status] = :success
+      flash[:result_text] = "Successfully destroyed #{@media_category.singularize} #{@work.id}"
+      redirect_to root_path
+    else
+      flash.now[:status] = :failure
+      flash[:result_text] = "You can't delete that. Only the owner #{User.find_by(id: @work.user_id)} can."
+      redirect_to work_path(@work)
+    end
   end
 
   def upvote
@@ -91,7 +107,7 @@ class WorksController < ApplicationController
 
 private
   def media_params
-    params.require(:work).permit(:title, :category, :creator, :description, :publication_year)
+    params.require(:work).permit(:title, :category, :creator, :description, :publication_year).merge( user_id: @login_user.id)
   end
 
   def category_from_work
