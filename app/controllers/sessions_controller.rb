@@ -9,12 +9,12 @@ class SessionsController < ApplicationController
 
     if @user
       session[:user_id] = @user.id
-        flash[:success] = "Welcome back #{@user.name}"
+        flash[:result_text] = "Welcome back #{@user.name}"
     else
       @user = User.new(uid: @auth_hash['uid'], provider: @auth_hash['provider'], name: @auth_hash['info']['name'], username: @auth_hash['info']['nickname'], email: @auth_hash['info']['email'])
         if @user.save
           session[:user_id] = @user.id
-          flash[:success] = "Welcome to MediaRanker, #{@user.name}"
+          flash[:result_text] = "Welcome to MediaRanker, #{@user.name}"
         else
           flash[:error] = "Unable to save user!"
         end
