@@ -1,6 +1,7 @@
 require 'test_helper'
 
 describe Work do
+
   describe "relations" do
     it "has a list of votes" do
        thrill = works(:thrill)
@@ -82,12 +83,12 @@ describe Work do
 
     it "tracks the number of votes" do
       work = Work.create!(title: "test title", category: "movie")
-      4.times do |i|
-        user = User.create!(username: "user#{i}")
-        Vote.create!(user: user, work: work)
-      end
-      work.vote_count.must_equal 4
-      Work.find(work.id).vote_count.must_equal 4
+      Vote.create!(work: work, user: users(:ada))
+      Vote.create!(work: work, user: users(:grace))
+
+
+      work.vote_count.must_equal 2
+      Work.find(work.id).vote_count.must_equal 2
     end
   end
 
@@ -95,13 +96,13 @@ describe Work do
     before do
       # TODO DPR: This runs pretty slow. Fixtures?
       # Create users to do the voting
-      test_users = []
-      20.times do |i|
-        test_users << User.create!(username: "user#{i}")
-      end
 
       # Create media to vote upon
       Work.where(category: "movie").destroy_all
+      test_users = []
+      test_users << users(:ada)
+      test_users << users(:grace)
+
       8.times do |i|
         work = Work.create!(category: "movie", title: "test movie #{i}")
         vote_count = rand(test_users.length)

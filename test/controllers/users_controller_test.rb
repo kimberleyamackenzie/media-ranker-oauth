@@ -4,6 +4,7 @@ describe UsersController do
   describe "index" do
     it "succeeds with many users" do
       # Assumption: there are many users in the DB
+      login(users(:another))
       User.count.must_be :>, 0
 
       get users_path
