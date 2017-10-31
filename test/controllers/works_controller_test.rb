@@ -1,6 +1,9 @@
 require 'test_helper'
 
 describe WorksController do
+  before(:all) do
+    login(users(:another))
+  end
   describe "root" do
     it "succeeds with all media types" do
       # Precondition: there is at least one media of each category
@@ -127,7 +130,9 @@ describe WorksController do
 
   describe "edit" do
     it "succeeds for an extant work ID" do
-      get edit_work_path(Work.first)
+      work = Work.create(title: "This is a book", creator: "Me", publication_year: 1999, description: "A great one", category: "album", user_id: users(:another).id)
+
+      get edit_work_path(work.id)
       must_respond_with :success
     end
 
@@ -140,7 +145,7 @@ describe WorksController do
 
   describe "update" do
     it "succeeds for valid data and an extant work ID" do
-      work = Work.first
+      work = Work.create(title: "This is a book", creator: "Me", publication_year: 1999, description: "A great one", category: "album", user_id: users(:another).id)
       work_data = {
         work: {
           title: work.title + " addition"
@@ -148,7 +153,6 @@ describe WorksController do
       }
 
       patch work_path(work), params: work_data
-      must_redirect_to work_path(work)
 
       # Verify the DB was really modified
       Work.find(work.id).title.must_equal work_data[:work][:title]
@@ -163,7 +167,8 @@ describe WorksController do
       }
 
       patch work_path(work), params: work_data
-      must_respond_with :not_found
+      must_respond_with :redirect
+      must_redirect_to work_path(work.id)
 
       # Verify the DB was not modified
       Work.find(work.id).title.must_equal work.title
@@ -177,14 +182,11 @@ describe WorksController do
   end
 
   describe "destroy" do
-    it "succeeds for an extant work ID" do
+    it "will not work if you do not own the work" do
       work_id = Work.first.id
 
       delete work_path(work_id)
-      must_redirect_to root_path
-
-      # The work should really be gone
-      Work.find_by(id: work_id).must_be_nil
+      must_redirect_to work_path(work_id)
     end
 
     it "renders 404 not_found and does not update the DB for a bogus work ID" do
@@ -199,45 +201,35 @@ describe WorksController do
   end
 
   describe "upvote" do
-    let(:user) { User.create!(username: "test_user") }
-    let(:work) { Work.first }
-
-    def login
-      post login_path, params: { username: user.username }
-      must_respond_with :redirect
-    end
-
-    def logout
+    it "redirects if no user is logged in" do
+      work = Work.first
       post logout_path
-      must_respond_with :redirect
-    end
-
-    it "returns 401 unauthorized if no user is logged in" do
       start_vote_count = work.votes.count
 
       post upvote_path(work)
-      must_respond_with :unauthorized
+      must_respond_with :redirect
+      must_redirect_to root_path
 
       work.votes.count.must_equal start_vote_count
     end
 
-    it "returns 401 unauthorized after the user has logged out" do
-      start_vote_count = work.votes.count
+    it "redirects after the user has logged out" do
+      work = Work.first
 
-      login
-      logout
+      start_vote_count = work.votes.count
+      post logout_path
 
       post upvote_path(work)
-      must_respond_with :unauthorized
+      must_respond_with :redirect
+      must_redirect_to root_path
 
       work.votes.count.must_equal start_vote_count
     end
 
     it "succeeds for a logged-in user and a fresh user-vote pair" do
+      work = Work.first
+
       start_vote_count = work.votes.count
-
-      login
-
       post upvote_path(work)
       # Should be a redirect_back
       must_respond_with :redirect
@@ -247,8 +239,9 @@ describe WorksController do
     end
 
     it "returns 409 conflict if the user has already voted for that work" do
-      login
-      Vote.create!(user: user, work: work)
+      work = Work.first
+
+      Vote.create!(user: users(:another), work: work)
 
       start_vote_count = work.votes.count
 
