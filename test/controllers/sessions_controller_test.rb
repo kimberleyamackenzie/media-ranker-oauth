@@ -5,7 +5,10 @@ describe SessionsController do
     # The login form is a static page - no real way to make it fail
     it "succeeds" do
       login(users(:ada))
-      must_respond_with :success
+      must_respond_with :redirect
+      must_redirect_to root_path
+
+      session[:user_id].must_equal users(:ada).id
     end
   end
 
